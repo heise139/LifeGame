@@ -8,22 +8,62 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string>
+#include <cstring>
+
+#include <set>
 
 using namespace std;
 
 #ifndef SRC_LIFEGAME_H_
 #define SRC_LIFEGAME_H_
 
+vector<string> split(string& str,const char* c)
+{
+    char *cstr, *p;
+    vector<string> res;
+    cstr = new char[str.size()+1];
+    strcpy(cstr,str.c_str());
+    p = strtok(cstr,c);
+    while(p!=NULL)
+    {
+        res.push_back(p);
+        p = strtok(NULL,c);
+    }
+    delete cstr;
+    return res;
+}
+
+
+
 class Position{
 public:
 	int x;
 	int y;
+	Position()
+	{
+		x = 0;
+		y = 0;
+	}
 
 	Position(int x_, int y_)
 	{
 		x = x_;
 		y = y_;
 	}
+
+	bool operator<(const Position& p1) const
+	{
+		if(p1.x == x && y == p1.y)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+
 
 };
 
@@ -34,36 +74,69 @@ public:
 	{
 		scale = 0;
 		all_space = 0;
+		default_space = 0;
 		refresh_interval = 1.0;
 	}
 
-	bool SetScale()
+	void RandomGenerateOriginalCells(int num)
 	{
-		cout<<"please input the scale of the ground" <<endl;
-		scale = 4;
+		srand((unsigned int)time(0));
+		int x;
+		int y;
+		while(originalCells.size() < num)
+		{
+			x = rand()%scale;
+			y = rand()%scale;
+			Position pos(x, y);
+			originalCells.insert(pos);
+		}
 
 	}
-
-	void SetOriginalCells()
+	void InitFromFile(char* content[], int lineNum)
 	{
-		cout<<"please input the original cell num" <<endl;
-		Position pos1(1 , 1);
-		Position pos2(1, 2);
-		Position pos3(2, 2);
-		Position pos4(0, 2);
+		cout<<"begin initialization ...."<<endl;
+		string str = content[0];
+		vector<string> strs = split(str, " ");
 
-		originalCells.push_back(pos1);
-		originalCells.push_back(pos2);
-		originalCells.push_back(pos3);
-		originalCells.push_back(pos4);
+		scale = atoi(strs[0].c_str());
+		refresh_interval = atof(strs[1].c_str());
+
+		cout<<"scale " << scale << " ";
+		cout<<"refresh_interval " << refresh_interval << endl;
+
+		int cellnum = atoi(content[1]);
+
+		if(!strcmp(strs[2].c_str(),"random"))
+		{
+			cout<<"file generate"<<endl;
+			for(int i = 0; i < cellnum; i++)
+			{
+				Position pos;
+				string str1 = content[i+2];
+				strs = split(str1 ," ");
+				pos.x = atoi(strs[0].c_str());
+				pos.y = atoi(strs[1].c_str());
+				originalCells.insert(pos);
+			}
+
+		}
+		else
+		{
+			cout<<"random generate"<<endl;
+			RandomGenerateOriginalCells(cellnum);
+		}
+		cout<<"cell num " << originalCells.size()<<endl;
+		Initializaiton();
 	}
 
 	void Initializaiton()
 	{
 		all_space = new bool*[scale];
+		default_space = new bool*[scale];
 		for(int i = 0; i < scale; i++)
 		{
 			all_space[i] = new bool[scale];
+			default_space[i] = new bool[scale];
 		}
 
 		for(int i = 0 ; i < scale; i++)
@@ -71,78 +144,82 @@ public:
 			for(int j = 0 ; j < scale; j++)
 			{
 				all_space[i][j] = false;
+				default_space[i][j] = false;
 			}
 		}
-		cout<<"originalCEll num" << originalCells.size() << endl;
-		for(int i = 0; i < originalCells.size(); i++)
+
+		for(set<Position>::iterator it = originalCells.begin(); it != originalCells.end(); it++)
 		{
-			all_space[originalCells[i].x][originalCells[i].y] = true;
+			all_space[it->x][it->y] = true;
 		}
+
 	}
 
 	void RefreshNextState()
 	{
-		bool ** nextState;
-		nextState = new bool*[scale];
-		for(int i = 0; i < scale; i++)
-		{
-			nextState[i] = new bool[scale];
-		}
-
 		for(int i = 0 ; i < scale; i++)
 		{
 			for(int j = 0 ; j < scale; j++)
 			{
-				nextState[i][j] = false;
+				default_space[i][j] = false;
 			}
 		}
-
-
 
 		for(int i = 0 ; i < scale; i++)
 		{
 			for(int j = 0; j < scale; j++)
 			{
-				nextState[i][j] = CalculateCellNextState(i, j);
+				default_space[i][j] = CalculateCellNextState(i, j);
 			}
 		}
 
-		delete [] all_space;
-		all_space = nextState;
+		bool **tmp = all_space;
+		all_space = default_space;
+		default_space = tmp;
 	}
 
 	void MainLogic()
 	{
-		SetScale();
-		SetOriginalCells();
-		Initializaiton();
-
-		int i = 6;
-		while(i--)
+		while(CheckIfStopped())
 		{
-			sleep(refresh_interval);
+			usleep(refresh_interval * 1000 * 1000);
 			PaintAllSpace();
 			RefreshNextState();
 		}
 	}
 
+	bool CheckIfStopped()
+	{
+		bool result = false;
+		for(int i = 0; i < scale; i++)
+		{
+			for(int j = 0; j < scale; j++)
+			{
+				if(all_space[i][j])
+				{
+					result = true;
+				}
+			}
+		}
+		return result;
+	}
+
 	void PaintAllSpace()
 	{
-		char alive = '1';
-		char dead = '0';
+		char alive = '*';
+		char dead = ' ';
 		system("clear");
-		//cout<<"============================================="<<endl;
 		for(int i = 0 ; i < scale ; i ++)
 		{
 			for(int j = 0; j < scale; j++)
 			{
 				if(all_space[i][j])
 				{
-					cout << alive << ' ';
+					cout << alive;
 				}
 				else
 				{
-					cout << dead << ' ';
+					cout << dead;
 				}
 			}
 			cout << endl;
@@ -174,6 +251,7 @@ public:
 				return true;
 			}
 		}
+		return false;
 	}
 
 	int AroundCellCount(int x, int y)
@@ -199,10 +277,12 @@ public:
 		return num;
 	}
 
+
 	int scale;
-	vector<Position> originalCells;
+	set<Position> originalCells;
 	bool **all_space;
 	float refresh_interval;
+	bool **default_space;
 };
 
 
