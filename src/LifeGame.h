@@ -18,21 +18,7 @@ using namespace std;
 #ifndef SRC_LIFEGAME_H_
 #define SRC_LIFEGAME_H_
 
-vector<string> split(string& str,const char* c)
-{
-    char *cstr, *p;
-    vector<string> res;
-    cstr = new char[str.size()+1];
-    strcpy(cstr,str.c_str());
-    p = strtok(cstr,c);
-    while(p!=NULL)
-    {
-        res.push_back(p);
-        p = strtok(NULL,c);
-    }
-    delete cstr;
-    return res;
-}
+vector<string> split(string& str,const char* c);
 
 
 
@@ -67,9 +53,11 @@ public:
 
 };
 
+
 class LifeGame
 {
 public:
+
 	LifeGame()
 	{
 		scale = 0;
@@ -206,24 +194,36 @@ public:
 
 	void PaintAllSpace()
 	{
-		char alive = '*';
+		char alive = '@';
 		char dead = ' ';
 		system("clear");
+		for(int i = 0 ; i < scale*2; i++)
+		{
+			cout<<"-";
+		}
+		cout<<endl;
 		for(int i = 0 ; i < scale ; i ++)
 		{
+			cout<<"|";
 			for(int j = 0; j < scale; j++)
 			{
 				if(all_space[i][j])
 				{
-					cout << alive;
+					cout << alive << ' ';
 				}
 				else
 				{
-					cout << dead;
+					cout << dead << ' ';
 				}
 			}
-			cout << endl;
+			cout<<"|" << endl;
 		}
+		for(int i = 0 ; i < scale*2; i++)
+		{
+			cout<<"-";
+		}
+		cout<<endl;
+
 	}
 
 	bool CalculateCellNextState(int x, int y)
