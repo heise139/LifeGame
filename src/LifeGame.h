@@ -93,8 +93,8 @@ public:
 		cout<<"refresh_interval " << refresh_interval << endl;
 
 		int cellnum = atoi(content[1]);
-
-		if(!strcmp(strs[2].c_str(),"random"))
+		cout<<strs[2];
+		if(strcmp(strs[2].c_str(),"random\n") != 0)
 		{
 			cout<<"file generate"<<endl;
 			for(int i = 0; i < cellnum; i++)
@@ -106,7 +106,6 @@ public:
 				pos.y = atoi(strs[1].c_str());
 				originalCells.insert(pos);
 			}
-
 		}
 		else
 		{
