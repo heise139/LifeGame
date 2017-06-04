@@ -60,7 +60,8 @@ public:
 
 	LifeGame()
 	{
-		scale = 0;
+		scale_x = 0;
+		scale_y = 0;
 		all_space = 0;
 		default_space = 0;
 		refresh_interval = 1.0;
@@ -73,8 +74,8 @@ public:
 		int y;
 		while(originalCells.size() < num)
 		{
-			x = rand()%scale;
-			y = rand()%scale;
+			x = rand()%scale_x;
+			y = rand()%scale_y;
 			Position pos(x, y);
 			originalCells.insert(pos);
 		}
@@ -86,15 +87,16 @@ public:
 		string str = content[0];
 		vector<string> strs = split(str, " ");
 
-		scale = atoi(strs[0].c_str());
-		refresh_interval = atof(strs[1].c_str());
+		scale_x = atoi(strs[0].c_str());
+		scale_y = atoi(strs[1].c_str());
+		refresh_interval = atof(strs[2].c_str());
 
-		cout<<"scale " << scale << " ";
+		cout<<"scale_x " << scale_x << " scale_y " << scale_y<<endl;
 		cout<<"refresh_interval " << refresh_interval << endl;
 
 		int cellnum = atoi(content[1]);
-		cout<<strs[2];
-		if(strcmp(strs[2].c_str(),"random\n") != 0)
+		cout<<strs[3];
+		if(strcmp(strs[3].c_str(),"random\n") != 0)
 		{
 			cout<<"file generate"<<endl;
 			for(int i = 0; i < cellnum; i++)
@@ -118,17 +120,17 @@ public:
 
 	void Initializaiton()
 	{
-		all_space = new bool*[scale];
-		default_space = new bool*[scale];
-		for(int i = 0; i < scale; i++)
+		all_space = new bool*[scale_x];
+		default_space = new bool*[scale_x];
+		for(int i = 0; i < scale_x; i++)
 		{
-			all_space[i] = new bool[scale];
-			default_space[i] = new bool[scale];
+			all_space[i] = new bool[scale_y];
+			default_space[i] = new bool[scale_y];
 		}
 
-		for(int i = 0 ; i < scale; i++)
+		for(int i = 0 ; i < scale_x; i++)
 		{
-			for(int j = 0 ; j < scale; j++)
+			for(int j = 0 ; j < scale_y; j++)
 			{
 				all_space[i][j] = false;
 				default_space[i][j] = false;
@@ -144,17 +146,17 @@ public:
 
 	void RefreshNextState()
 	{
-		for(int i = 0 ; i < scale; i++)
+		for(int i = 0 ; i < scale_x; i++)
 		{
-			for(int j = 0 ; j < scale; j++)
+			for(int j = 0 ; j < scale_y; j++)
 			{
 				default_space[i][j] = false;
 			}
 		}
 
-		for(int i = 0 ; i < scale; i++)
+		for(int i = 0 ; i < scale_x; i++)
 		{
-			for(int j = 0; j < scale; j++)
+			for(int j = 0; j < scale_y; j++)
 			{
 				default_space[i][j] = CalculateCellNextState(i, j);
 			}
@@ -178,9 +180,9 @@ public:
 	bool CheckIfStopped()
 	{
 		bool result = false;
-		for(int i = 0; i < scale; i++)
+		for(int i = 0; i < scale_x; i++)
 		{
-			for(int j = 0; j < scale; j++)
+			for(int j = 0; j < scale_y; j++)
 			{
 				if(all_space[i][j])
 				{
@@ -196,28 +198,28 @@ public:
 		char alive = '@';
 		char dead = ' ';
 		system("clear");
-		for(int i = 0 ; i < scale*2; i++)
+		for(int i = 0 ; i < scale_y*2; i++)
 		{
 			cout<<"-";
 		}
 		cout<<endl;
-		for(int i = 0 ; i < scale ; i ++)
+		for(int i = 0 ; i < scale_x ; i ++)
 		{
 			cout<<"|";
-			for(int j = 0; j < scale; j++)
+			for(int j = 0; j < scale_y; j++)
 			{
 				if(all_space[i][j])
 				{
-					cout << alive << ' ';
+					cout << alive <<" ";
 				}
 				else
 				{
-					cout << dead << ' ';
+					cout << dead <<" ";
 				}
 			}
 			cout<<"|" << endl;
 		}
-		for(int i = 0 ; i < scale*2; i++)
+		for(int i = 0 ; i < scale_y*2; i++)
 		{
 			cout<<"-";
 		}
@@ -256,17 +258,18 @@ public:
 	int AroundCellCount(int x, int y)
 	{
 		int num = 0;
-		int board = scale - 1;
+		int x_board = scale_x - 1;
+		int y_board = scale_y - 1;
 		for(int i = x - 1 ; i <= x + 1; i++)
 		{
-			if(i < 0 || i > board)
+			if(i < 0 || i > x_board)
 			{
 				continue;
 			}
 
 			for(int j = y - 1; j <= y + 1; j++)
 			{
-				if(j < 0 || j > board || (i == x && j == y) )
+				if(j < 0 || j > y_board || (i == x && j == y) )
 				{
 					continue;
 				}
@@ -277,7 +280,8 @@ public:
 	}
 
 
-	int scale;
+	int scale_x;
+	int scale_y;
 	set<Position> originalCells;
 	bool **all_space;
 	float refresh_interval;
